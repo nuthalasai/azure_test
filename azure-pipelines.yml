@@ -4,6 +4,10 @@ parameters:
   - name: override_keep_live
     type: string
 
+variables:
+  - name: environmentValue
+    value: 'QA'  # Set the desired environment value here
+
 steps:
   - task: AzurePowerShell@5
     displayName: 'Update DynamoDB Table'
@@ -38,7 +42,7 @@ steps:
         )
 
         foreach ($item in $updateItems) {
-            if ($item.Environment -eq "$(Environment)") {
+            if ($item.Environment -eq "$(environmentValue)") {
                 $updateRequest = @{
                     'TableName' = $tableName
                     'Key' = @{
