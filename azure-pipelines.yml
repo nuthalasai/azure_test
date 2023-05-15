@@ -1,0 +1,59 @@
+parameters:
+  - name: Environment
+    type: string
+  - name: override_keep_live
+    type: string
+
+steps:
+  - task: AzurePowerShell@5
+    displayName: 'Update DynamoDB Table'
+    inputs:
+      azureSubscription: 'yourAzureSubscription'
+      ScriptType: InlineScript
+      Inline: |
+        # Connect to AWS DynamoDB
+        $accessKey = "AKIAYHPR5V7URBHAP7EW"
+        $secretKey = "8yrn20L8PZrnrwNLvEXe4p6LNAAKODCCrHBLk99k"
+        $region = "us-east-1"
+        $tableName = "Environment-new"
+
+        $dynamoDBConfig = @{
+            'AccessKey' = $accessKey
+            'SecretKey' = $secretKey
+            'Region' = $region
+        }
+
+        $dynamoDBClient = New-Object -TypeName Amazon.DynamoDBv2.AmazonDynamoDBClient -ArgumentList $dynamoDBConfig
+
+        # Update the table
+        $updateItems = @(
+            @{
+                'Environment' = "QA"
+                'override_keep_live' = "1"
+            },
+            @{
+                'Environment' = "DEV"
+                'override_keep_live' = "0"
+            }
+        )
+
+        foreach ($item in $updateItems) {
+            if ($item.Environment -eq "$(Environment)") {
+                $updateRequest = @{
+                    'TableName' = $tableName
+                    'Key' = @{
+                        'Environment' = @{
+                            'S' = $item.Environment
+                        }
+                    }
+                    'UpdateExpression' = 'SET override_keep_live = :value'
+                    'ExpressionAttributeValues' = @{
+                        ':value' = @{
+                            'N' = $item.override_keep_live
+                        }
+                    }
+                }
+
+                $dynamoDBClient.UpdateItem($updateRequest)
+            }
+        }
