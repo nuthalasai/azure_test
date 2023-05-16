@@ -1,0 +1,155 @@
+# Welcome to Serverless!
+
+service: ecs-rds-serverless
+# app and org for use with dashboard.serverless.com
+#app: your-app-name
+#org: your-org-name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+
+# you can overwrite defaults here
+#  stage: dev
+#  region: us-east-1
+
+# you can add statements to the Lambda function's IAM Role here
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "s3:ListBucket"
+          Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+        - Effect: "Allow"
+          Action:
+            - "s3:PutObject"
+          Resource:
+            Fn::Join:
+              - ""
+              - - "arn:aws:s3:::"
+                - "Ref" : "ServerlessDeploymentBucket"
+                - "/*"
+        - Effect: Allow
+          Action:
+            - rds:DescribeDBClusterParameters
+            - rds:StartDBCluster
+            - rds:StopDBCluster
+            - rds:DescribeDBEngineVersions
+            - rds:DescribeGlobalClusters
+            - rds:DescribePendingMaintenanceActions
+            - rds:DescribeDBLogFiles
+            - rds:StopDBInstance
+            - rds:StartDBInstance
+            - rds:DescribeReservedDBInstancesOfferings
+            - rds:DescribeReservedDBInstances
+            - rds:ListTagsForResource
+            - rds:DescribeValidDBInstanceModifications
+            - rds:DescribeDBInstances
+            - rds:DescribeSourceRegions
+            - rds:DescribeDBClusterEndpoints
+            - rds:DescribeDBClusters
+            - rds:DescribeDBClusterParameterGroups
+            - rds:DescribeOptionGroups
+          Resource:
+            - arn:aws:rds:us-east-1:565832429545:db:database-1
+            - arn:aws:rds:us-east-1:565832429545:db:database-2
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:CreateTable
+            - dynamodb:DescribeTable
+            - dynamodb:PutItem
+            - dynamodb:BatchWriteItem
+            - dynamodb:UpdateTable
+            - dynamodb:ListTables
+          Resource:
+            - arn:aws:dynamodb:us-east-1:565832429545:table/rds-start-stop
+            - arn:aws:dynamodb:us-east-1:565832429545:table/ecs-start-stop
+            - arn:aws:dynamodb:us-east-1:565832429545:table/Environment
+            - arn:aws:dynamodb:us-east-1:565832429545:table/*
+        - Effect: Allow
+          Action:
+            - ecs:UpdateService
+            - ecs:DescribeServices
+          Resource:
+            - arn:aws:ecs:us-east-1:565832429545:service/qa-dt-svc-cluster/dt-web-Service
+            - arn:aws:ecs:us-east-1:565832429545:service/qa-dt-svc-cluster/dt-identity-api-Service
+            - arn:aws:ecs:us-east-1:565832429545:service/dev-dt-svc-cluster/dt-identity-api-Service
+            - arn:aws:ecs:us-east-1:565832429545:service/dev-dt-svc-cluster/dt-web-Service
+
+# you can define service wide environment variables here
+#  environment:
+#    variable1: value1
+
+# you can add packaging information here
+#package:
+#  patterns:
+#    - '!exclude-me.py'
+#    - '!exclude-me-dir/**'
+#    - include-me.py
+#    - include-me-dir/**
+
+functions:
+  service:
+    handler: service_start_stop.lambda_handler
+    memorySize: 256
+    timeout: 80
+    events:
+      - schedule: cron(30 8 ? * TUE *)
+      - schedule: cron(30 8 ? * TUE *)
+
+
+#    Define function environment variables here
+#    environment:
+#      variable2: value2
+
+# you can add CloudFormation resource templates here
+resources:
+  Resources:
+    MyDynamoDBTable1:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ecs-start-stop
+        AttributeDefinitions:
+          - AttributeName: ID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ID
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+    MyDynamoDBTable2:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Environment
+        AttributeDefinitions:
+          - AttributeName: Environment
+            AttributeType: S
+        KeySchema:
+          - AttributeName: Environment
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+    MyDynamoDBTable3:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: rds-start-stop
+        AttributeDefinitions:
+          - AttributeName: ID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ID
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
