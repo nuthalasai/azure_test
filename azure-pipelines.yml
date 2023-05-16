@@ -1,63 +1,25 @@
-parameters:
-  - name: Environment
-    type: string
-  - name: override_keep_live
-    type: string
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
 
 variables:
-  - name: environmentValue
-    value: 'QA'  # Set the desired environment value here
+- group: AWS-Credentials
 
 steps:
-  - task: AzurePowerShell@5
-    displayName: 'Update DynamoDB Table'
+  - task: NodeTool@0
     inputs:
-      azureSubscription: 'de0e1338-c67b-4764-a662-c770df26f7b9'
-      ScriptType: InlineScript
-      Inline: |
-        # Connect to AWS DynamoDB
-        $accessKey = "AKIAYHPR5V7URBHAP7EW"
-        $secretKey = "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"
-        $region = "us-east-1"
-        $tableName = "Environment-new"
+      versionSpec: '12.x'
+    displayName: 'Install Node.js'
 
-        $dynamoDBConfig = @{
-            'AccessKey' = $accessKey
-            'SecretKey' = $secretKey
-            'Region' = $region
-        }
+  - script: |
+      npm install -g serverless
+      npm ci
+    displayName: 'Install Serverless Framework'
 
-        $dynamoDBClient = New-Object -TypeName Amazon.DynamoDBv2.AmazonDynamoDBClient -ArgumentList $dynamoDBConfig
-
-        # Update the table
-        $updateItems = @(
-            @{
-                'Environment' = "QA"
-                'override_keep_live' = "1"
-            },
-            @{
-                'Environment' = "DEV"
-                'override_keep_live' = "0"
-            }
-        )
-
-        foreach ($item in $updateItems) {
-            if ($item.Environment -eq "$(environmentValue)") {
-                $updateRequest = @{
-                    'TableName' = $tableName
-                    'Key' = @{
-                        'Environment' = @{
-                            'S' = $item.Environment
-                        }
-                    }
-                    'UpdateExpression' = 'SET override_keep_live = :value'
-                    'ExpressionAttributeValues' = @{
-                        ':value' = @{
-                            'N' = $item.override_keep_live
-                        }
-                    }
-                }
-
-                $dynamoDBClient.UpdateItem($updateRequest)
-            }
-        }
+  - script: |
+      sls deploy --stage $(Environment) --region $(AWSRegion)
+    displayName: 'Deploy Serverless Application'
