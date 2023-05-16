@@ -64,7 +64,7 @@ def lambda_handler(event, context):
                 desiredCount=1
             )
             print(f'Started ECS service: {environment} {cluster} {service}')
-"""
+
 # Update the RDS status based on the specified day of the week
     for item in rds_items:
         start_day = int(item['start_day'])
@@ -94,4 +94,3 @@ def lambda_handler(event, context):
                 print(f'Started RDS instance: {environment} {db_instance_id}')
             else:
                 print(f'Skipped starting RDS instance: {environment} {db_instance_id} as it is already {db_instance["DBInstanceStatus"]}')
-"""
