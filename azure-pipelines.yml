@@ -17,13 +17,19 @@ steps:
 
   - script: |
       npm install -g serverless
-      npm ci
     displayName: 'Install Serverless Framework'
 
   - script: |
+      ls
+      pwd
+    displayName: 'List Contents and Current Directory'
+
+  - script: |
+      sls config credentials --provider aws --key $(AWS_ACCESS_KEY_ID) --secret $(AWS_SECRET_ACCESS_KEY)
+      cd pause_infra
       sls deploy --stage $(Environment) --region $(AWSRegion)
     displayName: 'Deploy Serverless Application'
+    env:
+      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
 
-# Enforce sequential execution
-strategy:
-  parallel: 1
