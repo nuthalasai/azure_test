@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - Test
+      - serverless
 
 pool:
   vmImage: 'ubuntu-latest'
