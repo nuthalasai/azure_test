@@ -23,3 +23,7 @@ steps:
   - script: |
       sls deploy --stage $(Environment) --region $(AWSRegion)
     displayName: 'Deploy Serverless Application'
+
+# Enforce sequential execution
+strategy:
+  parallel: 1
