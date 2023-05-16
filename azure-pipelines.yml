@@ -12,7 +12,7 @@ steps:
   - task: AzurePowerShell@5
     displayName: 'Update DynamoDB Table'
     inputs:
-      azureSubscription: 'yourAzureSubscription'
+      azureSubscription: 'de0e1338-c67b-4764-a662-c770df26f7b9'
       ScriptType: InlineScript
       Inline: |
         # Connect to AWS DynamoDB
